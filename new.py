@@ -365,7 +365,7 @@ jade = 0         #收集的宝石数量
 
 #对应状态写对应组件逻辑
 def controlStates():
-    global state
+    global state,hero,sence,canvas
     if state == 'START':
         canvas.blit(start, (0, 0))
     elif state == 'RUNNING':
@@ -402,9 +402,6 @@ def handleEvent():
             hero.move(event)
             sence.move(event)
             comMove()
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            exit()
         if event.type == pygame.MOUSEBUTTONDOWN:
             if state == 'START':
                 state = 'RUNNING'
