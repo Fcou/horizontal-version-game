@@ -1,6 +1,6 @@
 # 导入包
 # coding:utf-8
-import pygame,easygui,os
+import pygame,easygui,os,sys
 from pygame.locals import *
 
 #创建游戏窗口
@@ -43,7 +43,7 @@ class Hero():
         self.y = y
         self.width = 100
         self.height = 150
-        self.n = 1
+        self.n = 1    #用于切换图片
         # 控制行走动作切换
         self.flagW = False
         # 控制站立动作切换
@@ -68,7 +68,7 @@ class Hero():
         if self.flagHit or self.flagJ:
             return
         if self.y < 500:
-            self.y = self.y + 10
+            self.y = self.y + 15
 
     def move(self,event):
         if event.type == KEYDOWN:
@@ -119,7 +119,7 @@ class Hero():
 
     def walk(self):
         if self.flagW:
-            if self.n % 2 == 0:
+            if self.n % 2 == 0:   #分类，轮流选择
                 if self.flagRight:
                     canvas.blit(heroR1, (self.x, self.y))
                 else:
@@ -142,39 +142,57 @@ class Hero():
             if self.flagRight:
                 canvas.blit(heroU, (self.x, self.y))
             else:
-                canvas.blit(heroUL, (self.x, self.y))
+                canvas.blit(heroUL, (self.x, self.y))   #选好跳跃图片
+                
             if self.jumpVel < 0:
-                self.jumpVel += 2
+                self.jumpVel += 3
             elif self.jumpVel >= 0:
-                self.jumpVel += 2.5
-            self.y += self.jumpVel
-            if self.y > self.base:
+                self.jumpVel += 4    
+            self.y += self.jumpVel 
+            if self.y > self.base:   #已下落到最底部，停止下落，站立
                 self.y = self.base
                 self.jumpVel = 0.0
                 self.flagJ = False
                 self.flagW = False
                 self.flagS = True
 
-# 场景类
+#     # 是否碰撞到其他物品
+#     def hit(self, other):
+#         if self.x + self.width >= other.x and self.x < other.x + other.width:
+#             #如果从上到下碰撞,英雄的改变
+#             if self.y + self.height - 10  <= other.y:  
+#                 self.y = other.y    
+#                 self.flagS = True
+#                 self.stand()
+#             #如果从下到上碰撞,英雄的改变
+#             if self.y >=  other.y + other.height:
+#                 self.flagJ = True
+#                 self.jumpVel = 0
+#                 self.jump()
+#                 
+#             return True
+#         return False
+                
+# 背景类
 class Sence():
     def __init__(self, x, y):
         self.x = x
         self.y = y
 
     def draw(self):
-        self.y = -hero.y - 100
+        self.y = -hero.y - 100   # 与英雄上下移动方向相反，上面留100像素空间，防止英雄上挑超出背景
         canvas.blit(bg, (self.x, self.y))
-    def move(self,event):
+    def move(self,event):        # 侧重于左右移动
         if event.type == KEYDOWN:
             if event.key == K_RIGHT:
-                self.x = self.x - 15
+                self.x = self.x - 10
             elif event.key == K_LEFT:
                 if self.x != 0:
-                    self.x = self.x + 15
+                    self.x = self.x + 10
     def out(self):
-        if self.x >= 0:
+        if self.x >= 0:    #若大于0，则窗口会出现没有背景的区域
             self.x = 0
-        if self.x < -2393:
+        if self.x < -2393: #若小于-2400，则窗口会出现没有背景的区域
             self.x = -2393
 
 # 其他物品类
@@ -197,17 +215,39 @@ class Obj():
         self.x = sence.x + self.bgX
         self.y = sence.y + self.bgY
 
-    def hit(self, c):
-        return c.x > self.x - c.width + 50 and c.x < self.x + self.width - 50
+    def hit(self, c):  #这个方法太蠢了
+        return c.x > self.x - c.width + 50 and c.x < self.x + self.width - 50 
 
-# 碰撞检测
+# 英雄碰撞检测
+# def checkHitOther():
+#     global hero,state,life
+#     hero.hit(wallA)
+#     for obj in objs:
+#         hero.hit(obj)
+#     if hero.hit(wallW):
+#         life = life - 1
+#         state = 'AGAIN'
+#     for box in boxes:
+#         if hero.hit(box):
+#             box.img = box2
+#             if k.box == 'get':
+#                     jade = jade + 1
+#                     box.box = 'null'
+#             elif box.box == 'null':
+#                 pass
+#             else:
+#                 life = life - 1
+#                 k.box = 'null'
+#                 state = 'AGAIN'
+            
+           
+# 碰撞检测（蠢）
 def checkHit():
 	global state, life, jade
 	if wallA.hit(hero):
-		if hero.y + hero.height >= wallA.y + 50 and hero.y < wallA.y:
+		if hero.y + hero.height >= wallA.y  and hero.y < wallA.y:
 			hero.flagHit = True
 			hero.y = hero.y - 10
-
 		if hero.y >= wallA.y and hero.x <= wallA.width:
 			hero.flagHit = True
 			hero.x = hero.x + 20
@@ -318,10 +358,10 @@ boxE = Obj(3000, 1230, 105, 77, box1, 'get')
 boxes = [boxA, boxB, boxC, boxD, boxE]
 
 # 变量初始化
-state = 'START'
-life = 3
-food = 0 #粮食超过50才能过关
-jade = 0 #收集的宝石数量
+state = 'START'  #游戏状态
+life = 3         #玩家生命值
+food = 0         #粮食超过50才能过关
+jade = 0         #收集的宝石数量
 
 #对应状态写对应组件逻辑
 def controlStates():
@@ -329,22 +369,22 @@ def controlStates():
     if state == 'START':
         canvas.blit(start, (0, 0))
     elif state == 'RUNNING':
-        sence.draw()
-        sence.out()
-        comPaint()
-        hero.stand()
+        sence.draw()   #背景绘制
+        sence.out()    #背景越界限制 
+        comPaint()     #绘制其他组件
+        hero.stand()   #通过flag标志来确定英雄目前的状态（唯一）
         hero.down()
         hero.walk()
         hero.jump()
         checkHit()
-        canvas.blit(top, (640, 0))
+#         checkHitOther()
+        canvas.blit(top, (640, 0))    #绘制生命值，宝石数，粮食数量
         fillText(life, (860, 0), 40)
         fillText(jade, (1010, 0), 40)
         fillText(food, (1140, 0), 40)
         if life <= 0:
             state = 'OVER'
     elif state == 'AGAIN':
-        createObj()
         canvas.blit(again, (0, 0))
         fillText(life, (290, 300), 200)
     elif state == 'OVER':
@@ -354,6 +394,10 @@ def controlStates():
 def handleEvent():
     global state,hero,sence
     for event in pygame.event.get():
+        #退出监听
+        if event.type == QUIT or event.type == KEYDOWN and event.key == K_ESCAPE:
+            pygame.quit()
+            sys.exit() 
         if state == 'RUNNING':
             hero.move(event)
             sence.move(event)
@@ -373,7 +417,7 @@ def handleEvent():
                 buy()
                 
 while True:
-    controlStates()          
-    handleEvent()
-    pygame.display.update()
-    pygame.time.delay(10)
+    controlStates()           #分为四种状态，各自处理
+    handleEvent()             #处理交互事件
+    pygame.display.update()   #界面更新 
+    pygame.time.delay(1)     #将暂停一段给定的毫秒数
